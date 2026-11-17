@@ -10,6 +10,8 @@ Proyectos de inteligencia artificial aplicada, automatización y APIs. Cada carp
 |----------|-------------|-------------|
 | [llm-text-api](./llm-text-api) | API REST para resumir, clasificar y extraer datos de texto con un modelo de lenguaje local | Python, FastAPI, Ollama, Docker, pytest |
 
+Cada proyecto incluye también una explicación sin tecnicismos: [LLM Text API en simple](./llm-text-api/GUIA.md).
+
 ## Enfoque
 
 - **Modelos locales:** los proyectos usan modelos servidos por Ollama, sin enviar datos a servicios externos.

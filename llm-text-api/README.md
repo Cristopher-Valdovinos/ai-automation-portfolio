@@ -2,6 +2,8 @@
 
 API REST para **resumir, clasificar y extraer datos de texto** usando un modelo de lenguaje local servido por [Ollama](https://ollama.com). Todo corre en tu propio equipo: los textos no salen a servicios externos.
 
+> ¿No eres del área técnica? Lee la [explicación en simple](GUIA.md): qué es, para qué sirve y cómo funciona, sin jerga.
+
 Construida con FastAPI, con salida estructurada (JSON Schema), manejo de errores, pruebas automáticas y Docker.
 
 ## Endpoints
