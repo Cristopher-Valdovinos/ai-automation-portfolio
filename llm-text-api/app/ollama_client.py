@@ -1,5 +1,6 @@
 """Cliente asíncrono mínimo para la API HTTP de Ollama."""
 
+import asyncio
 import json
 from typing import Any
 
@@ -22,8 +23,12 @@ class OllamaClient:
         model: str,
         timeout: float = 120.0,
         transport: httpx.AsyncBaseTransport | None = None,
+        retries: int = 1,
+        retry_delay: float = 2.0,
     ) -> None:
         self.model = model
+        self._retries = retries
+        self._retry_delay = retry_delay
         self._http = httpx.AsyncClient(
             base_url=base_url, timeout=timeout, transport=transport
         )
@@ -32,12 +37,19 @@ class OllamaClient:
         await self._http.aclose()
 
     async def _request(self, method: str, url: str, **kwargs: Any) -> dict[str, Any]:
-        try:
-            response = await self._http.request(method, url, **kwargs)
-        except httpx.TimeoutException as exc:
-            raise OllamaError(504, "Ollama tardó demasiado en responder.") from exc
-        except httpx.TransportError as exc:
-            raise OllamaError(503, "No se pudo conectar con Ollama.") from exc
+        for intento in range(self._retries + 1):
+            try:
+                response = await self._http.request(method, url, **kwargs)
+            except httpx.TimeoutException as exc:
+                raise OllamaError(504, "Ollama tardó demasiado en responder.") from exc
+            except httpx.TransportError as exc:
+                raise OllamaError(503, "No se pudo conectar con Ollama.") from exc
+
+            # Un error 5xx suele ser pasajero (por ejemplo, el modelo se cayó
+            # mientras cargaba), así que se reintenta antes de rendirse.
+            if response.status_code < 500 or intento == self._retries:
+                break
+            await asyncio.sleep(self._retry_delay)
 
         if response.status_code == 404:
             raise OllamaError(

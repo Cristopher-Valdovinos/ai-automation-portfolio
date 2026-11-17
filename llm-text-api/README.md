@@ -17,6 +17,10 @@ Documentación interactiva (Swagger): `http://localhost:8000/docs`
 
 ![Documentación interactiva de la API en Swagger](docs/swagger.png)
 
+Desde esa misma página se puede probar cada endpoint. Aquí, `/clasificar` respondiendo con el modelo local:
+
+![Petición a /clasificar ejecutada desde Swagger, con la respuesta del modelo](docs/swagger-demo.png)
+
 ## Requisitos
 
 - [Ollama](https://ollama.com) corriendo, con al menos un modelo descargado (`ollama pull llama3.2`)
@@ -134,6 +138,7 @@ docker-compose.yml
 
 - **Salida estructurada:** `/clasificar` y `/extraer` envían un JSON Schema a Ollama, que restringe la respuesta del modelo a ese formato. Además, la API valida el resultado antes de devolverlo.
 - **Cliente inyectado:** el cliente de Ollama se entrega como dependencia de FastAPI, lo que permite reemplazarlo por uno simulado en las pruebas.
+- **Reintento automático:** si Ollama responde con un error 5xx (por ejemplo, cuando el modelo falla al cargarse en la GPU), el cliente espera un momento y reintenta una vez antes de devolver el error.
 - **Errores claros:** los fallos de Ollama se traducen a códigos HTTP específicos en vez de un error 500 genérico.
 
 ## Autor

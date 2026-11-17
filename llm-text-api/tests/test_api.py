@@ -18,6 +18,7 @@ def cliente_con(handler) -> TestClient:
         base_url="http://ollama.test",
         model=MODELO,
         transport=httpx.MockTransport(handler),
+        retry_delay=0,
     )
     app.dependency_overrides[get_ollama] = lambda: ollama
     return TestClient(app)
@@ -160,3 +161,45 @@ def test_modelo_no_encontrado_devuelve_502():
     r = cliente_con(handler).post("/resumir", json={"texto": "hola"})
     assert r.status_code == 502
     assert MODELO in r.json()["detail"]
+
+
+def test_health_modelo_no_descargado():
+    handler = lambda request: httpx.Response(200, json={"models": [{"name": "otro:latest"}]})
+    r = cliente_con(handler).get("/health")
+    assert r.json()["estado"] == "degradado"
+    assert r.json()["ollama_conectado"] is True
+    assert r.json()["modelo_disponible"] is False
+
+
+def test_respuesta_vacia_devuelve_502():
+    r = cliente_con(lambda request: respuesta_chat("   ")).post(
+        "/resumir", json={"texto": "hola"}
+    )
+    assert r.status_code == 502
+
+
+def test_reintenta_si_ollama_falla_una_vez():
+    llamadas = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        llamadas.append(request)
+        if len(llamadas) == 1:
+            return httpx.Response(500, json={"error": "el modelo se cayó al cargar"})
+        return respuesta_chat("Un resumen.")
+
+    r = cliente_con(handler).post("/resumir", json={"texto": "hola"})
+    assert r.status_code == 200
+    assert r.json()["resumen"] == "Un resumen."
+    assert len(llamadas) == 2
+
+
+def test_error_persistente_devuelve_502_tras_reintentar():
+    llamadas = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        llamadas.append(request)
+        return httpx.Response(500, json={"error": "fallo"})
+
+    r = cliente_con(handler).post("/resumir", json={"texto": "hola"})
+    assert r.status_code == 502
+    assert len(llamadas) == 2
