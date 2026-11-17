@@ -15,6 +15,8 @@ Construida con FastAPI, con salida estructurada (JSON Schema), manejo de errores
 
 Documentación interactiva (Swagger): `http://localhost:8000/docs`
 
+![Documentación interactiva de la API en Swagger](docs/swagger.png)
+
 ## Requisitos
 
 - [Ollama](https://ollama.com) corriendo, con al menos un modelo descargado (`ollama pull llama3.2`)
@@ -51,16 +53,21 @@ uvicorn app.main:app --reload
 
 ## Ejemplos
 
+Respuestas reales, obtenidas con un modelo Qwen local (`Qwen-Local:latest` en Ollama). Con otro modelo el texto puede variar.
+
 **Resumir**
 
 ```bash
 curl -X POST http://localhost:8000/resumir \
   -H "Content-Type: application/json" \
-  -d '{"texto": "FastAPI es un framework web moderno para construir APIs con Python...", "max_oraciones": 2}'
+  -d '{"texto": "FastAPI es un framework web moderno para construir APIs con Python. Usa las anotaciones de tipo del lenguaje para validar los datos de entrada, genera documentación interactiva de forma automática y soporta código asíncrono, lo que le permite atender muchas peticiones a la vez. Por eso se usa cada vez más para exponer modelos de inteligencia artificial como servicios.", "max_oraciones": 2}'
 ```
 
 ```json
-{ "resumen": "FastAPI es un framework para crear APIs en Python...", "modelo": "llama3.2" }
+{
+  "resumen": "FastAPI es un framework moderno de Python para crear APIs que valida datos, genera documentación automática y maneja peticiones asíncronas de forma eficiente. Por estas características, se utiliza cada vez más para exponer modelos de inteligencia artificial como servicios.",
+  "modelo": "Qwen-Local:latest"
+}
 ```
 
 **Clasificar**
@@ -72,7 +79,11 @@ curl -X POST http://localhost:8000/clasificar \
 ```
 
 ```json
-{ "categoria": "reclamo", "justificacion": "El cliente reporta un producto dañado.", "modelo": "llama3.2" }
+{
+  "categoria": "reclamo",
+  "justificacion": "El texto expresa insatisfacción por un producto dañado y la falta de respuesta del servicio, lo que caracteriza un reclamo.",
+  "modelo": "Qwen-Local:latest"
+}
 ```
 
 **Extraer**
@@ -84,7 +95,7 @@ curl -X POST http://localhost:8000/extraer \
 ```
 
 ```json
-{ "datos": { "nombre": "Ana Rojas", "fecha": "3 de diciembre", "telefono": null }, "modelo": "llama3.2" }
+{ "datos": { "nombre": "Ana Rojas", "fecha": "3 de diciembre", "telefono": null }, "modelo": "Qwen-Local:latest" }
 ```
 
 ## Errores
