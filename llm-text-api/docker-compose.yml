@@ -1,0 +1,14 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # Ollama corriendo en el equipo anfitrión (o en otro contenedor con el puerto 11434 publicado)
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
+      OLLAMA_TIMEOUT: ${OLLAMA_TIMEOUT:-120}
+    extra_hosts:
+      # Necesario en Linux para que host.docker.internal resuelva al anfitrión
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
