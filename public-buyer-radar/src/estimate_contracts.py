@@ -97,7 +97,11 @@ def apply_ai_durations(contracts: pd.DataFrame) -> pd.DataFrame:
     """Rule 3: use the LLM answers for contracts still unknown."""
     if not AI_FILE.exists():
         return contracts
+    from extract_durations import TIME_HINT  # local import avoids a circular import
+
     ai = pd.read_json(AI_FILE, lines=True).dropna(subset=["ai_months"])
+    # Re-check cached answers with the current evidence rule.
+    ai = ai[ai["ai_evidence"].str.contains(TIME_HINT)]
     contracts = contracts.merge(ai, on=["OrganismoPublico", "contract_id"], how="left")
     use_ai = (contracts["method"] == "unknown") & contracts["ai_months"].notna()
     contracts.loc[use_ai, "months"] = contracts.loc[use_ai, "ai_months"]

@@ -16,6 +16,7 @@ Usage:
 import argparse
 import json
 import os
+import re
 import time
 import urllib.request
 from pathlib import Path
@@ -28,14 +29,24 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 CONTRACTS_FILE = DATA_DIR / "contracts.csv"
 CACHE_FILE = DATA_DIR / "ai_durations.jsonl"
 
-OLLAMA_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+# 127.0.0.1 instead of "localhost": on Windows, "localhost" tries IPv6 first
+# and adds about 2 seconds to every request.
+OLLAMA_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "Qwen-Local:latest")
-# 0 = run on CPU. Set OLLAMA_NUM_GPU to use the GPU if your drivers allow it.
-NUM_GPU = int(os.getenv("OLLAMA_NUM_GPU", "0"))
+# Layers to put on the GPU. Empty = let Ollama decide; "0" = CPU only.
+NUM_GPU = os.getenv("OLLAMA_NUM_GPU", "")
 
 MIN_AMOUNT = 100_000_000   # only contracts above 100 million CLP
 MAX_MONTHS = 120
 MAX_TEXT = 1500            # characters sent to the model
+
+# The evidence must talk about time. Without this, the model sometimes
+# quotes the tender code (e.g. "757-28-LR25") as "evidence".
+TIME_HINT = re.compile(r"mes|año|ano|anual|vigencia|per[ií]odo|plazo|\b20\d\d\b", re.IGNORECASE)
+
+# Short system prompt: replaces the model's default one (long), so each
+# request has fewer tokens to process.
+SYSTEM = "Responde solo con JSON válido."
 
 PROMPT = """Eres analista de compras públicas en Chile. Lee el texto de una orden de compra
 y responde SOLO un JSON con:
@@ -61,13 +72,17 @@ def contract_text(items: pd.DataFrame) -> str:
 
 
 def ask_model(text: str) -> dict:
+    options = {"temperature": 0}
+    if NUM_GPU:
+        options["num_gpu"] = int(NUM_GPU)
     body = json.dumps({
         "model": OLLAMA_MODEL,
+        "system": SYSTEM,
         "prompt": PROMPT.format(text=text),
         "format": "json",
         "stream": False,
         "think": False,
-        "options": {"temperature": 0, "num_gpu": NUM_GPU},
+        "options": options,
     }).encode()
     request = urllib.request.Request(
         f"{OLLAMA_URL}/api/generate", body, {"Content-Type": "application/json"}
@@ -83,6 +98,8 @@ def clean_answer(answer: dict, text: str) -> tuple[int | None, str | None]:
     if not isinstance(months, int) or not 1 <= months <= MAX_MONTHS:
         return None, None
     if not evidence or evidence.lower() not in text.lower():
+        return None, None
+    if not TIME_HINT.search(evidence):
         return None, None
     return months, evidence
 

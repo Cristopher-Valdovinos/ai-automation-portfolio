@@ -32,8 +32,8 @@ Se aplica la primera regla que funcione:
 | `unit_months` | El ítem se mide en meses: inicio + cantidad de meses | 3.586 | 34,3% |
 | `monthly_active` | Llegan órdenes todos los meses y siguen llegando | 780 | 12,2% |
 | `monthly_ended` | Llegaban órdenes mensuales y se cortaron hace más de 3 meses | 1.380 | 9,1% |
-| `ai_text` | El modelo de lenguaje encontró la duración en el texto | 93 | 6,6% |
-| `unknown` | Ninguna regla aplica | 23.691 | 37,8% |
+| `ai_text` | El modelo de lenguaje encontró la duración en el texto | 91 | 6,4% |
+| `unknown` | Ninguna regla aplica | 23.693 | 37,9% |
 
 La mayoría de los contratos `unknown` son compras puntuales y pequeñas: los contratos de hasta $100 millones suman solo el 6,3% del monto.
 
@@ -48,10 +48,11 @@ La IA se usa solo donde una regla no alcanza: leer texto libre. Se envían al mo
 Para evitar respuestas inventadas:
 
 - El modelo debe citar la frase exacta que respalda su respuesta. **Si la frase no aparece en el texto, la respuesta se descarta.**
+- La frase citada debe hablar de tiempo (meses, años, vigencia, periodo o un año como 2026). Sin esta regla, el modelo a veces citaba el código de la licitación como "evidencia".
 - Si el texto no dice la duración, debe responder `null`.
 - Las duraciones fuera de 1 a 120 meses se descartan.
 
-En la prueba con los 300 contratos más grandes encontró la duración en 93. En el resto, la orden solo dice "ORDEN DE COMPRA DESDE [código]" y el modelo respondió `null` en vez de inventar.
+En los 308 contratos más grandes encontró la duración en 98, y 91 pasaron todos los filtros. En el resto, la orden solo dice "ORDEN DE COMPRA DESDE [código]" y el modelo respondió `null` en vez de inventar.
 
 ## Puntaje de prospectos
 
@@ -98,9 +99,30 @@ Los resultados quedan en `data/` (excluida de git): `contracts.csv` y `reports/p
 
 | Variable | Por defecto | Descripción |
 |---|---|---|
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | URL de Ollama |
+| `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | URL de Ollama. En Windows conviene `127.0.0.1` en vez de `localhost`, que agrega unos 2 segundos por pedido |
 | `OLLAMA_MODEL` | `Qwen-Local:latest` | Nombre del modelo, como aparece en `ollama list` |
-| `OLLAMA_NUM_GPU` | `0` | Capas en GPU. `0` usa solo la CPU (unos 8 segundos por contrato) |
+| `OLLAMA_NUM_GPU` | (vacío) | Capas en GPU. Vacío deja decidir a Ollama; `0` usa solo la CPU |
+
+### Rendimiento
+
+Medido con un modelo Qwen MoE de 35B (cuantizado a 4 bits) en una RTX 5070 de 12 GB:
+
+| Configuración | Segundos por contrato |
+|---|---|
+| Solo CPU | ~8,0 |
+| GPU, conectando a `localhost` | ~3,7 |
+| GPU, conectando a `127.0.0.1` | ~1,4 |
+| GPU + flash attention + caché `q8_0` + prompt de sistema corto | **~0,8** |
+
+Variables de entorno de Ollama usadas (a nivel de usuario de Windows):
+
+```powershell
+setx OLLAMA_LLM_LIBRARY cuda_v12
+setx OLLAMA_FLASH_ATTENTION 1
+setx OLLAMA_KV_CACHE_TYPE q8_0
+```
+
+> **GPU RTX serie 50 (Blackwell):** con Ollama 0.33.3, el backend `cuda_v13` falla al cargar el modelo (`CUDA error`). `OLLAMA_LLM_LIBRARY=cuda_v12` lo evita. El mismo error aparece si no hay VRAM libre suficiente al cargar, por ejemplo cuando quedan procesos `llama-server` de una sesión anterior.
 
 ## Estructura
 
