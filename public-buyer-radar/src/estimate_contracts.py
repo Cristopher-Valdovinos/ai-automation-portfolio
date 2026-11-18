@@ -27,6 +27,8 @@ OUTPUT_FILE = DATA_DIR / "contracts.csv"
 AI_FILE = DATA_DIR / "ai_durations.jsonl"
 
 MAX_MONTHS = 120          # ignore durations longer than 10 years (likely typos)
+MIN_MONTHS = 2            # "1 month" is usually one monthly payment of a longer
+                          # contract (e.g. "por el mes de diciembre"), not its duration
 INACTIVE_AFTER = 3        # months without orders before a contract is "ended"
 MIN_MONTHLY_ORDERS = 3    # distinct months needed to call a contract "monthly"
 URGENCY_WINDOW = 6        # months to look back for urgency signals
@@ -51,7 +53,7 @@ def load_orders() -> pd.DataFrame:
 
 def months_from_units(items: pd.DataFrame) -> pd.Series:
     """Rule 1: largest month quantity per contract, when items are in months."""
-    in_months = items[(items["UnidadMedida"] == "Mes") & items["quantity"].between(1, MAX_MONTHS)]
+    in_months = items[(items["UnidadMedida"] == "Mes") & items["quantity"].between(MIN_MONTHS, MAX_MONTHS)]
     return in_months.groupby(["OrganismoPublico", "contract_id"])["quantity"].max()
 
 
@@ -101,7 +103,7 @@ def apply_ai_durations(contracts: pd.DataFrame) -> pd.DataFrame:
 
     ai = pd.read_json(AI_FILE, lines=True).dropna(subset=["ai_months"])
     # Re-check cached answers with the current evidence rule.
-    ai = ai[ai["ai_evidence"].str.contains(TIME_HINT)]
+    ai = ai[ai["ai_evidence"].str.contains(TIME_HINT) & (ai["ai_months"] >= MIN_MONTHS)]
     contracts = contracts.merge(ai, on=["OrganismoPublico", "contract_id"], how="left")
     use_ai = (contracts["method"] == "unknown") & contracts["ai_months"].notna()
     contracts.loc[use_ai, "months"] = contracts.loc[use_ai, "ai_months"]

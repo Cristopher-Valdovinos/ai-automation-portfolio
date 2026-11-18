@@ -15,7 +15,7 @@ La versión 1 se enfoca en **servicios de limpieza industrial** (aseo, recolecci
 
 ## Ejemplo de resultado
 
-Reporte al 17-11-2026: 84 prospectos, que suman $48.796 millones en contratos por vencer.
+Reporte al 17-11-2026: 90 prospectos, que suman $50.527 millones en contratos por vencer.
 
 | # | Puntaje | Organismo | Servicio | Proveedor actual | Monto contrato | Estado | Confianza |
 |---|---|---|---|---|---|---|---|
@@ -29,13 +29,15 @@ Se aplica la primera regla que funcione:
 
 | Regla | Cuándo aplica | Contratos | % del monto |
 |---|---|---|---|
-| `unit_months` | El ítem se mide en meses: inicio + cantidad de meses | 3.586 | 34,3% |
-| `monthly_active` | Llegan órdenes todos los meses y siguen llegando | 780 | 12,2% |
-| `monthly_ended` | Llegaban órdenes mensuales y se cortaron hace más de 3 meses | 1.380 | 9,1% |
-| `ai_text` | El modelo de lenguaje encontró la duración en el texto | 91 | 6,4% |
-| `unknown` | Ninguna regla aplica | 23.693 | 37,9% |
+| `unit_months` | El ítem se mide en meses: inicio + cantidad de meses (2 o más) | 2.629 | 26,4% |
+| `monthly_active` | Llegan órdenes todos los meses y siguen llegando | 912 | 16,5% |
+| `monthly_ended` | Llegaban órdenes mensuales y se cortaron hace más de 3 meses | 1.530 | 11,6% |
+| `ai_text` | El modelo de lenguaje encontró la duración en el texto | 319 | 8,3% |
+| `unknown` | Ninguna regla aplica | 24.140 | 37,2% |
 
-La mayoría de los contratos `unknown` son compras puntuales y pequeñas: los contratos de hasta $100 millones suman solo el 6,3% del monto.
+La mayoría de los contratos `unknown` son compras puntuales y pequeñas: los contratos de hasta $100 millones suman solo el 6,5% del monto.
+
+Una duración de "1 mes" no se usa: casi siempre es un pago mensual de un contrato más largo ("por el mes de diciembre"), no la duración del contrato.
 
 ## El paso con IA
 
@@ -52,11 +54,11 @@ Para evitar respuestas inventadas:
 - Si el texto no dice la duración, debe responder `null`.
 - Las duraciones fuera de 1 a 120 meses se descartan.
 
-En los 308 contratos más grandes encontró la duración en 98, y 91 pasaron todos los filtros. En el resto, la orden solo dice "ORDEN DE COMPRA DESDE [código]" y el modelo respondió `null` en vez de inventar.
+De los 1.233 contratos grandes sin fecha, encontró la duración en 391; 319 pasaron todos los filtros. En el resto, la orden solo dice "ORDEN DE COMPRA DESDE [código]" y el modelo respondió `null` en vez de inventar.
 
 ## Puntaje de prospectos
 
-Entran al reporte los contratos de más de $50 millones que vencen o vencieron dentro de ±90 días y que no muestran renovación: el mismo organismo no tiene un contrato más nuevo para el mismo servicio. Este filtro descartó 72 de 156 candidatos.
+Entran al reporte los contratos de más de $50 millones que vencen o vencieron dentro de ±90 días y que no muestran renovación: el mismo organismo no tiene un contrato más nuevo para el mismo servicio. Este filtro descartó 72 de 162 candidatos.
 
 | Componente | Puntos |
 |---|---|
@@ -142,7 +144,7 @@ public-buyer-radar/
 ## Decisiones de diseño
 
 - **Filtrar al descargar:** cada mes pesa unos 800 MB sin comprimir; se lee por partes de 200.000 filas y solo se guarda la categoría elegida. 34 meses ocupan 13 MB en disco.
-- **Reglas primero, IA después:** las reglas cubren el 55,6% del monto sin costo. La IA se usa solo para 300 contratos grandes, no para 29.530.
+- **Reglas primero, IA después:** las reglas cubren el 54,5% del monto sin costo. La IA se usa solo para 1.233 contratos grandes, no para 29.530.
 - **Evidencia obligatoria:** una respuesta del modelo sin cita verificable no se usa.
 - **Procesos que se pueden retomar:** la descarga salta los meses ya procesados y la IA guarda cada respuesta al instante.
 - **Fechas como estimación:** cada prospecto indica el método y su nivel de confianza.
