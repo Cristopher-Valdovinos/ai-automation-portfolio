@@ -53,7 +53,7 @@ uvicorn app.main:app --reload
 
 | Variable          | Valor por defecto        | Descripción                                   |
 |-------------------|--------------------------|-----------------------------------------------|
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | URL del servidor Ollama                       |
+| `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | URL del servidor Ollama. En Windows conviene `127.0.0.1` en vez de `localhost`, que agrega unos 2 segundos por llamada |
 | `OLLAMA_MODEL`    | `llama3.2`               | Modelo a usar, tal como aparece en `ollama list` |
 | `OLLAMA_TIMEOUT`  | `120`                    | Segundos máximos de espera por respuesta      |
 
