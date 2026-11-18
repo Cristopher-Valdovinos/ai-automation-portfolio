@@ -1,6 +1,7 @@
 import pandas as pd
+import pytest
 
-from weekly_report import find_prospects, to_markdown
+from weekly_report import HIDDEN_SUPPLIER, display_supplier, find_prospects, to_markdown
 
 REPORT_DATE = pd.Timestamp("2026-11-17")
 
@@ -54,6 +55,22 @@ def test_status_and_confidence_labels():
     assert prospects.loc["past", "confidence"] == "media"
     assert prospects.loc["future", "status"] == "vence en 10 días"
     assert prospects.loc["future", "confidence"] == "alta"
+
+
+@pytest.mark.parametrize("name, shown", [
+    ("LIMCHILE S A", True),
+    ("Dimension S.A.", True),
+    ("Promarco SpA", True),
+    ("Preserva Ltda", True),
+    ("SOC DE INVERSIONES BIO REC LIMITADA", True),
+    ("ProMarco y Cia Ltda", True),
+    ("Yasna ", False),          # looks like a person's first name
+    ("colala", False),
+    ("Sasa Servicios", False),  # "Sa" inside a word is not "S.A."
+])
+def test_display_supplier_hides_names_without_company_form(name, shown):
+    expected = name.strip() if shown else HIDDEN_SUPPLIER
+    assert display_supplier(name) == expected
 
 
 def test_markdown_lists_prospects():

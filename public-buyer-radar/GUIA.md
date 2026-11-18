@@ -20,6 +20,8 @@ El reporte del 17 de noviembre de 2026 dice, entre otras cosas:
 
 Para una empresa de aseo, esa línea dice a quién llamar, cuánto vale la oportunidad, contra quién compite y que el momento es ahora.
 
+Puedes ver [el reporte completo de ese día](docs/example_report.md), con las 25 mejores oportunidades.
+
 ## Cómo funciona
 
 1. **Recolecta.** Cada mes, ChileCompra publica todas las órdenes de compra del Estado (casi 800 MB por mes). El sistema las descarga y se queda solo con las de limpieza.

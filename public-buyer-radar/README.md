@@ -15,7 +15,7 @@ La versión 1 se enfoca en **servicios de limpieza industrial** (aseo, recolecci
 
 ## Ejemplo de resultado
 
-Reporte al 17-11-2026: 90 prospectos, que suman $50.527 millones en contratos por vencer.
+Reporte al 17-11-2026: 90 prospectos, que suman $50.527 millones en contratos por vencer. **[Ver el reporte completo (top 25)](docs/example_report.md)**.
 
 | # | Puntaje | Organismo | Servicio | Proveedor actual | Monto contrato | Estado | Confianza |
 |---|---|---|---|---|---|---|---|
@@ -136,6 +136,7 @@ public-buyer-radar/
 │   ├── extract_durations.py   # duración desde texto libre con IA local
 │   └── weekly_report.py       # ranking y reporte de prospectos
 ├── tests/                     # pruebas con datos falsos pequeños (sin internet ni Ollama)
+├── docs/example_report.md     # reporte real generado por el sistema
 ├── data/                      # datos y reportes (no se suben a git)
 ├── requirements.txt
 ├── requirements-dev.txt

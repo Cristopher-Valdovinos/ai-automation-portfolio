@@ -17,6 +17,7 @@ Usage:
 """
 
 import argparse
+import re
 from datetime import date
 from pathlib import Path
 
@@ -30,6 +31,14 @@ WINDOW_DAYS = 90
 MIN_AMOUNT = 50_000_000
 RENEWAL_MARGIN_DAYS = 60   # a new contract starting this close to the end counts as renewal
 TOP_IN_MARKDOWN = 25
+
+# Suppliers without a company form in their name may be private persons.
+# The Markdown report hides them; the CSV keeps the original name.
+COMPANY_FORM = re.compile(
+    r"\b(S\.?\s?A|SPA|LTDA|LIMITADA|E\.?I\.?R\.?L|SOC|SOCIEDAD|C[IÍ]A|CORP|CORPORACI[OÓ]N|COOPERATIVA)\b",
+    re.IGNORECASE,
+)
+HIDDEN_SUPPLIER = "(sin razón social, oculto)"
 
 CONFIDENCE = {
     "unit_months": "alta",
@@ -77,6 +86,11 @@ def find_prospects(contracts: pd.DataFrame, report_date: pd.Timestamp) -> pd.Dat
     return prospects.sort_values("score", ascending=False)
 
 
+def display_supplier(name: str) -> str:
+    """Show the supplier only if its name looks like a company."""
+    return name.strip() if COMPANY_FORM.search(name) else HIDDEN_SUPPLIER
+
+
 def millions(amount: float) -> str:
     return f"${amount / 1e6:,.0f} M".replace(",", ".")
 
@@ -102,7 +116,7 @@ def to_markdown(prospects: pd.DataFrame, report_date: pd.Timestamp) -> str:
         urgency = f"{row.emergency} emerg. / {row.extension} prórr." if row.urgency else "—"
         lines.append(
             f"| {i} | {row.score} | {row.OrganismoPublico} | {row.region} | {row.service} | "
-            f"{row.supplier} | {millions(row.total_amount)} | {row.status} | {row.confidence} | {urgency} |"
+            f"{display_supplier(row.supplier)} | {millions(row.total_amount)} | {row.status} | {row.confidence} | {urgency} |"
         )
     lines += [
         "",
@@ -113,6 +127,7 @@ def to_markdown(prospects: pd.DataFrame, report_date: pd.Timestamp) -> str:
         "- **Confianza alta:** la duración viene en los datos de la orden (meses). "
         "**Media:** la leyó la IA desde el texto, o se infiere porque dejaron de llegar órdenes mensuales.",
         "- Las fechas son estimaciones a partir de datos abiertos de ChileCompra; conviene confirmar en la ficha de la licitación.",
+        "- Los proveedores sin razón social en su nombre (S.A., SpA, Ltda., etc.) se ocultan, porque podrían ser personas naturales.",
     ]
     return "\n".join(lines) + "\n"
 
