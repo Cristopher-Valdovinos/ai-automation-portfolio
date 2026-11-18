@@ -134,12 +134,19 @@ def urgency_signals(df: pd.DataFrame) -> pd.DataFrame:
     return recent.groupby("OrganismoPublico")[["emergency", "extension"]].sum()
 
 
-def main() -> None:
-    df = load_orders()
+def estimate(df: pd.DataFrame) -> pd.DataFrame:
+    """Contracts with estimated end dates and urgency signals."""
     contracts = build_contracts(df)
     signals = urgency_signals(df)
     contracts = contracts.merge(signals, on="OrganismoPublico", how="left")
     contracts[["emergency", "extension"]] = contracts[["emergency", "extension"]].fillna(0).astype(int)
+    return contracts
+
+
+def main() -> None:
+    df = load_orders()
+    contracts = estimate(df)
+    signals = urgency_signals(df)
 
     contracts.to_csv(OUTPUT_FILE, index=False, encoding="utf-8")
 

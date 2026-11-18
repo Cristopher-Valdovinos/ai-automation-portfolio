@@ -32,6 +32,16 @@ Puedes ver [el reporte actualizado](docs/example_report.md), con las 25 mejores 
 4. **Prioriza.** Cada oportunidad recibe un puntaje de 0 a 100 según su tamaño, qué tan pronto vence y si hay señales de urgencia.
 5. **Descarta lo que ya se renovó.** Si el organismo ya firmó un contrato nuevo, la oportunidad se saca de la lista. Este filtro eliminó casi la mitad de los candidatos.
 
+## ¿Funciona? Lo medimos
+
+Un caso que sale bien puede ser suerte. Por eso se hizo una prueba más exigente: se "volvió al pasado" 19 veces (el primer día de cada mes, de enero de 2025 a julio de 2026). En cada fecha se armó la lista **solo con lo que se sabía ese día**, y después se revisó qué pasó en realidad.
+
+- **55%** de los organismos de la lista volvió a contratar el servicio dentro de los 4 meses siguientes.
+- Si se eligieran organismos **al azar**, solo el **31%** lo habría hecho.
+- O sea, la lista es **1,8 veces mejor que elegir al azar**. Cuando el contrato está por vencer (y no vencido hace tiempo), sube a **61%**.
+
+El sistema no es perfecto: todavía se le escapan muchas renovaciones, porque hay contratos cuya fecha de término no aparece en los datos. Pero cuando dice "llama a este organismo", acierta más de la mitad de las veces.
+
 ## Por qué está hecho así
 
 - **Datos reales y públicos:** todo viene de los datos abiertos de ChileCompra. No hay datos inventados.

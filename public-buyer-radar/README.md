@@ -6,12 +6,15 @@ Sistema de prospección comercial B2B con datos abiertos de compras públicas de
 
 La versión 1 se enfoca en **servicios de limpieza industrial** (aseo, recolección de residuos y descontaminación): 35 meses de datos (enero de 2024 a noviembre de 2026), 65.689 órdenes de compra, 1.022 organismos y 6.084 proveedores.
 
+**Validado con backtest:** el 55% de los prospectos volvió a contratar el servicio dentro de 120 días, contra 31% si se eligiera al azar (**1,8 veces mejor**). Ver [resultados](#backtest-qué-tan-seguido-acierta).
+
 ## Qué hace
 
 1. **Descarga** las órdenes de compra mensuales de ChileCompra (unos 800 MB por mes) y guarda solo la categoría elegida (unos 350 KB por mes).
 2. **Agrupa** las órdenes en contratos (organismo + licitación o trato directo) y **estima cuándo vence** cada uno.
 3. **Usa un modelo de lenguaje local** para leer la duración del contrato en el texto libre de la orden, cuando no viene en los campos estructurados.
 4. **Genera un reporte semanal** con los prospectos ordenados por puntaje.
+5. **Mide su propia precisión** con un backtest sobre 19 fechas pasadas.
 
 ## Ejemplo de resultado
 
@@ -70,6 +73,30 @@ Entran al reporte los contratos de más de $50 millones que vencen o vencieron d
 
 Una compra de emergencia o una prórroga suele indicar que el contrato anterior venció y que viene una licitación nueva.
 
+## Backtest: qué tan seguido acierta
+
+Se generó el reporte en 19 fechas pasadas (el día 1 de cada mes, de enero de 2025 a julio de 2026), **usando solo los datos disponibles en cada fecha**. Después se revisó con los datos reales si cada organismo empezó un contrato nuevo del mismo servicio (de al menos $25 M) dentro de los 120 días siguientes.
+
+| Métrica | Valor |
+|---|---|
+| Prospectos evaluados | 1.206 |
+| **Precisión** | **55%** (top 25: 56%) |
+| Línea base (elegir al azar entre compradores con contratos grandes) | 31% |
+| **Mejora sobre el azar** | **1,8x** |
+| Cobertura (contratos grandes nuevos que el reporte anticipó) | 13% |
+| Error típico de fecha (mediana) | 34 días |
+
+Lo que enseña el desglose:
+
+- **"Por vencer" acierta 61%; "ya vencido sin renovación", 38%.** Un contrato vencido sin renovación visible muchas veces ya terminó o se reemplazó de otra forma.
+- **Las señales de urgencia funcionan:** 59% con emergencias o prórrogas, contra 51% sin ellas.
+- **Las fechas leídas por la IA rinden casi igual** que las de los campos estructurados (52% contra 56%).
+- **La cobertura es baja (13%)** porque el 36% del monto no tiene fecha estimada: la mayoría de las renovaciones vienen de contratos que el sistema no puede fechar todavía. Es la principal mejora pendiente.
+
+Detalle completo, con el desglose por fecha: [docs/backtest.md](docs/backtest.md).
+
+Una prueba automática verifica que el backtest no use información del futuro.
+
 ## Requisitos
 
 - Python 3.10 o superior (probado con 3.14)
@@ -95,6 +122,9 @@ python src/estimate_contracts.py
 
 # 4. Reporte
 python src/weekly_report.py
+
+# 5. (Opcional) Backtest, unos 40 segundos
+python src/backtest.py
 ```
 
 Los resultados quedan en `data/` (excluida de git): `contracts.csv` y `reports/prospects_AAAA-MM-DD.csv` / `.md`.
@@ -136,9 +166,12 @@ public-buyer-radar/
 │   ├── fetch_orders.py        # descarga y filtro por categoría
 │   ├── estimate_contracts.py  # contratos, vencimientos y señales de urgencia
 │   ├── extract_durations.py   # duración desde texto libre con IA local
-│   └── weekly_report.py       # ranking y reporte de prospectos
+│   ├── weekly_report.py       # ranking y reporte de prospectos
+│   └── backtest.py            # mide la precisión con fechas pasadas
 ├── tests/                     # pruebas con datos falsos pequeños (sin internet ni Ollama)
-├── docs/example_report.md     # reporte real generado por el sistema
+├── docs/
+│   ├── example_report.md      # reporte real generado por el sistema
+│   └── backtest.md            # resultados del backtest
 ├── data/                      # datos y reportes (no se suben a git)
 ├── requirements.txt
 ├── requirements-dev.txt
@@ -154,7 +187,7 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
-Las 26 pruebas usan tablas y archivos falsos pequeños, y simulan las respuestas de Ollama, así que no necesitan internet ni un modelo instalado. Corren automáticamente en cada cambio con GitHub Actions.
+Las 38 pruebas usan tablas y archivos falsos pequeños, y simulan las respuestas de Ollama, así que no necesitan internet ni un modelo instalado. Corren automáticamente en cada cambio con GitHub Actions.
 
 ## Decisiones de diseño
 
