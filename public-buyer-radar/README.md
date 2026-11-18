@@ -135,11 +135,23 @@ public-buyer-radar/
 │   ├── estimate_contracts.py  # contratos, vencimientos y señales de urgencia
 │   ├── extract_durations.py   # duración desde texto libre con IA local
 │   └── weekly_report.py       # ranking y reporte de prospectos
+├── tests/                     # pruebas con datos falsos pequeños (sin internet ni Ollama)
 ├── data/                      # datos y reportes (no se suben a git)
 ├── requirements.txt
+├── requirements-dev.txt
+├── pytest.ini
 ├── README.md
 └── GUIA.md
 ```
+
+## Pruebas
+
+```powershell
+pip install -r requirements-dev.txt
+pytest -q
+```
+
+Las 26 pruebas usan tablas y archivos falsos pequeños, y simulan las respuestas de Ollama, así que no necesitan internet ni un modelo instalado. Corren automáticamente en cada cambio con GitHub Actions.
 
 ## Decisiones de diseño
 
@@ -154,7 +166,7 @@ public-buyer-radar/
 - Las fechas de vencimiento son estimaciones; conviene confirmarlas en la ficha de la licitación.
 - Los datos de ChileCompra tienen un día de desfase. Un contrato "vencido sin renovación" puede haberse renovado en el mes que aún no se descarga.
 - Las señales de urgencia se cuentan por organismo, no por contrato.
-- Todavía no tiene pruebas automáticas ni Docker.
+- Todavía no tiene Docker.
 
 ## Próximos pasos
 

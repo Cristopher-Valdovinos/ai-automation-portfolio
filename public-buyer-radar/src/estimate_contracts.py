@@ -40,6 +40,12 @@ DEAL_ID_PATTERN = r"(\d+-\d+-[A-Z]+\d{2})"
 def load_orders() -> pd.DataFrame:
     files = sorted(RAW_DIR.glob("orders_*.csv.gz"))
     df = pd.concat([pd.read_csv(f, dtype=str) for f in files], ignore_index=True)
+    return prepare_orders(df)
+
+
+def prepare_orders(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert text columns to numbers/dates and assign a contract ID."""
+    df = df.copy()
     df["amount"] = pd.to_numeric(df["MontoTotalOC_PesosChilenos"].str.replace(",", "."))
     df["quantity"] = pd.to_numeric(df["cantidad"].str.replace(",", "."), errors="coerce")
     df["sent"] = pd.to_datetime(df["FechaEnvio"], errors="coerce")
@@ -73,6 +79,7 @@ def build_contracts(df: pd.DataFrame) -> pd.DataFrame:
         total_amount=("amount", "sum"),
     )
     contracts["months"] = months_from_units(df)
+    contracts["end_estimate"] = pd.NaT  # date column, even if no rule matches
 
     # Rule 1
     by_units = contracts["months"].notna()

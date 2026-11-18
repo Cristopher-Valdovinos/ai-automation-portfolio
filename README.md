@@ -9,7 +9,7 @@ Proyectos de inteligencia artificial aplicada, automatización y APIs. Cada carp
 | Proyecto | Descripción | Tecnologías |
 |----------|-------------|-------------|
 | [llm-text-api](./llm-text-api) | API REST para resumir, clasificar y extraer datos de texto con un modelo de lenguaje local | Python, FastAPI, Ollama, Docker, pytest |
-| [public-buyer-radar](./public-buyer-radar) | Prospección comercial B2B: detecta qué organismos del Estado están por volver a contratar un servicio, con datos abiertos de ChileCompra y un modelo de lenguaje local | Python, pandas, Ollama |
+| [public-buyer-radar](./public-buyer-radar) | Prospección comercial B2B: detecta qué organismos del Estado están por volver a contratar un servicio, con datos abiertos de ChileCompra y un modelo de lenguaje local | Python, pandas, Ollama, pytest |
 
 Cada proyecto incluye también una explicación sin tecnicismos: [LLM Text API en simple](./llm-text-api/GUIA.md) · [Public Buyer Radar en simple](./public-buyer-radar/GUIA.md).
 
@@ -17,7 +17,7 @@ Cada proyecto incluye también una explicación sin tecnicismos: [LLM Text API e
 
 - **Modelos locales:** los proyectos usan modelos servidos por Ollama, sin enviar datos a servicios externos.
 - **Listos para ejecutar:** cada proyecto incluye instrucciones paso a paso y variables de entorno documentadas.
-- **Con pruebas:** en `llm-text-api`, las pruebas corren automáticamente en cada cambio con GitHub Actions.
+- **Con pruebas:** las pruebas corren automáticamente en cada cambio con GitHub Actions.
 
 ## Sobre mí
 
