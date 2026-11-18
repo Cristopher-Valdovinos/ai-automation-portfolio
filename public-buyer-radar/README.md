@@ -6,7 +6,7 @@ Sistema de prospección comercial B2B con datos abiertos de compras públicas de
 
 La versión 1 se enfoca en **servicios de limpieza industrial** (aseo, recolección de residuos y descontaminación): 35 meses de datos (enero de 2024 a noviembre de 2026), 65.689 órdenes de compra, 1.022 organismos y 6.084 proveedores.
 
-**Validado con backtest:** el 55% de los prospectos volvió a contratar el servicio dentro de 120 días, contra 31% si se eligiera al azar (**1,8 veces mejor**). Ver [resultados](#backtest-qué-tan-seguido-acierta).
+**Validado con datos reales:** los organismos que marca el radar vuelven a contratar **1,8 veces más** que un grupo al azar de compradores similares. En contratos por vencer, **6 de cada 10 renuevan en menos de 4 meses**. Ver [cómo se midió](#backtest-qué-tan-seguido-acierta).
 
 ## Qué hace
 
