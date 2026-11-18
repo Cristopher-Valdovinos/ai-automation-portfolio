@@ -5,7 +5,9 @@ The end date is estimated with the first rule that applies:
   1. unit_months   - items measured in "Mes": start date + quantity months.
   2. monthly_ended - orders came regularly and then stopped: last order date.
      monthly_active - orders still arriving: contract is running, end unknown.
-  3. unknown       - no rule applies (the AI step will handle these later).
+  3. ai_text       - duration read from the order text by the local LLM
+                     (see extract_durations.py), with a quoted evidence.
+  4. unknown       - no rule applies.
 
 It also counts urgency signals per public body: emergency purchases and
 contract extensions ("prórroga") in the last 6 months usually mean the
@@ -22,6 +24,7 @@ import pandas as pd
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 RAW_DIR = DATA_DIR / "raw"
 OUTPUT_FILE = DATA_DIR / "contracts.csv"
+AI_FILE = DATA_DIR / "ai_durations.jsonl"
 
 MAX_MONTHS = 120          # ignore durations longer than 10 years (likely typos)
 INACTIVE_AFTER = 3        # months without orders before a contract is "ended"
@@ -86,7 +89,24 @@ def build_contracts(df: pd.DataFrame) -> pd.DataFrame:
     contracts.loc[ended, "method"] = "monthly_ended"
     contracts.loc[monthly & ~ended, "method"] = "monthly_active"
 
-    return contracts.reset_index()
+    contracts = contracts.reset_index()
+    return apply_ai_durations(contracts)
+
+
+def apply_ai_durations(contracts: pd.DataFrame) -> pd.DataFrame:
+    """Rule 3: use the LLM answers for contracts still unknown."""
+    if not AI_FILE.exists():
+        return contracts
+    ai = pd.read_json(AI_FILE, lines=True).dropna(subset=["ai_months"])
+    contracts = contracts.merge(ai, on=["OrganismoPublico", "contract_id"], how="left")
+    use_ai = (contracts["method"] == "unknown") & contracts["ai_months"].notna()
+    contracts.loc[use_ai, "months"] = contracts.loc[use_ai, "ai_months"]
+    contracts.loc[use_ai, "end_estimate"] = [
+        start + pd.DateOffset(months=int(m))
+        for start, m in zip(contracts.loc[use_ai, "start"], contracts.loc[use_ai, "ai_months"])
+    ]
+    contracts.loc[use_ai, "method"] = "ai_text"
+    return contracts.drop(columns=["ai_months"])
 
 
 def urgency_signals(df: pd.DataFrame) -> pd.DataFrame:
