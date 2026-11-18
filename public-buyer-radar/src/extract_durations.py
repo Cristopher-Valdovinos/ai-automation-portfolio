@@ -112,11 +112,22 @@ def load_cache() -> dict:
     return {(r["OrganismoPublico"], r["contract_id"]): r for r in rows}
 
 
+def ollama_available() -> bool:
+    try:
+        urllib.request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=3)
+        return True
+    except Exception:
+        return False
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, help="process at most N contracts")
     args = parser.parse_args()
+    run(args.limit)
 
+
+def run(limit: int | None = None) -> None:
     contracts = pd.read_csv(CONTRACTS_FILE)
     pending = contracts[
         (contracts["method"] == "unknown") & (contracts["total_amount"] > MIN_AMOUNT)
@@ -125,8 +136,8 @@ def main() -> None:
     cache = load_cache()
     keys = list(zip(pending["OrganismoPublico"], pending["contract_id"]))
     todo = [k for k in keys if k not in cache]
-    if args.limit:
-        todo = todo[: args.limit]
+    if limit:
+        todo = todo[:limit]
     print(f"{len(pending):,} large unknown contracts, {len(cache):,} cached, {len(todo):,} to process")
     if not todo:
         return

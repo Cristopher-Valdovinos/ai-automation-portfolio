@@ -21,6 +21,7 @@ Usage:
     python src/backtest.py
 """
 
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -31,6 +32,8 @@ from weekly_report import MIN_AMOUNT, WINDOW_DAYS, find_prospects
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 DOCS_DIR = Path(__file__).resolve().parent.parent / "docs"
 RESULTS_FILE = DATA_DIR / "backtest_by_cutoff.csv"
+BREAKDOWN_FILE = DATA_DIR / "backtest_breakdown.csv"   # used by charts.py
+SUMMARY_JSON = DATA_DIR / "backtest_summary.json"      # used by charts.py
 SUMMARY_FILE = DOCS_DIR / "backtest.md"
 
 FIRST_CUTOFF = "2025-01-01"
@@ -200,6 +203,8 @@ def main() -> None:
     by_type = breakdown(pd.concat(all_prospects, ignore_index=True))
 
     summary = summarize(results)
+    by_type.to_csv(BREAKDOWN_FILE, index=False, encoding="utf-8")
+    SUMMARY_JSON.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     DOCS_DIR.mkdir(exist_ok=True)
     SUMMARY_FILE.write_text(to_markdown(summary, results, by_type), encoding="utf-8")
     print(f"\nprecision {summary['precision']:.0%} (top {TOP_N}: {summary['precision_top']:.0%}) | "

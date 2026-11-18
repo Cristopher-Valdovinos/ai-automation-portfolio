@@ -46,3 +46,6 @@ def test_process_month_writes_file_and_skips_when_done(tmp_path, monkeypatch, ca
 
     process_month(2026, 10, zip_path)
     assert "already done" in capsys.readouterr().out
+
+    process_month(2026, 10, zip_path, refresh=True)  # current month: download again
+    assert "1 orders" in capsys.readouterr().out

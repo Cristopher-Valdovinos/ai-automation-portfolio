@@ -51,9 +51,11 @@ def filter_csv(zip_path: Path) -> pd.DataFrame:
     return pd.concat(kept, ignore_index=True)
 
 
-def process_month(year: int, month: int, zip_path: Path | None = None) -> Path:
+def process_month(year: int, month: int, zip_path: Path | None = None, refresh: bool = False) -> Path:
+    """Download and filter one month. refresh=True re-downloads a month that
+    already exists (the current month grows every day)."""
     out_file = OUTPUT_DIR / f"orders_{year}-{month:02d}.csv.gz"
-    if out_file.exists():
+    if out_file.exists() and not refresh:
         print(f"{year}-{month:02d}: already done, skipping")
         return out_file
 

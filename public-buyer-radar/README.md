@@ -15,10 +15,13 @@ La versión 1 se enfoca en **servicios de limpieza industrial** (aseo, recolecci
 3. **Usa un modelo de lenguaje local** para leer la duración del contrato en el texto libre de la orden, cuando no viene en los campos estructurados.
 4. **Genera un reporte semanal** con los prospectos ordenados por puntaje.
 5. **Mide su propia precisión** con un backtest sobre 19 fechas pasadas.
+6. **Corre solo cada semana** con un comando (`run_weekly.py`) que se puede programar.
 
 ## Ejemplo de resultado
 
 Reporte al 17-11-2026: 77 prospectos, que suman $42.452 millones en contratos por vencer. **[Ver el reporte completo (top 25)](docs/example_report.md)**.
+
+![Top 10 prospectos de la semana: monto del contrato que vence y días al vencimiento](docs/charts/top_prospects.svg)
 
 | # | Puntaje | Organismo | Servicio | Proveedor actual | Monto contrato | Estado | Confianza |
 |---|---|---|---|---|---|---|---|
@@ -77,6 +80,8 @@ Una compra de emergencia o una prórroga suele indicar que el contrato anterior 
 
 Se generó el reporte en 19 fechas pasadas (el día 1 de cada mes, de enero de 2025 a julio de 2026), **usando solo los datos disponibles en cada fecha**. Después se revisó con los datos reales si cada organismo empezó un contrato nuevo del mismo servicio (de al menos $25 M) dentro de los 120 días siguientes.
 
+![Precisión del backtest por tipo de prospecto: contrato por vencer 61%, puntaje 70 o más 60%, con urgencia 59%, todos 55%, ya vencido 38%, contra 31% al azar](docs/charts/backtest_precision.svg)
+
 | Métrica | Valor |
 |---|---|
 | Prospectos evaluados | 1.206 |
@@ -110,24 +115,40 @@ python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 
-# 1. Descargar y filtrar (unos 100 MB de descarga por mes)
-python src/fetch_orders.py 2024-01 2026-11
+# Todo el ciclo en un comando: datos, contratos, IA (si Ollama está activo) y reporte
+python src/run_weekly.py
+```
 
-# 2. Estimar contratos
-python src/estimate_contracts.py
+La primera vez descarga todo el historial (unos 3,5 GB en tránsito, 13 MB en disco). Las siguientes solo vuelven a descargar el mes anterior y el actual, que siguen creciendo: menos de un minuto.
 
-# 3. (Opcional) Leer duraciones con IA y volver a estimar
-python src/extract_durations.py --limit 300
-python src/estimate_contracts.py
+Los pasos también se pueden correr por separado:
 
-# 4. Reporte
-python src/weekly_report.py
-
-# 5. (Opcional) Backtest, unos 40 segundos
-python src/backtest.py
+```powershell
+python src/fetch_orders.py 2024-01 2026-11     # 1. descargar y filtrar
+python src/estimate_contracts.py               # 2. estimar contratos
+python src/extract_durations.py                # 3. IA (opcional) y luego repetir el paso 2
+python src/weekly_report.py                    # 4. reporte
+python src/backtest.py                         # backtest, unos 40 segundos
+python src/charts.py                           # gráficos del README (después del backtest)
 ```
 
 Los resultados quedan en `data/` (excluida de git): `contracts.csv` y `reports/prospects_AAAA-MM-DD.csv` / `.md`.
+
+## Automatización semanal
+
+`run_weekly.py` está pensado para correr solo cada lunes. En Windows, el script incluido lo registra en el Programador de tareas:
+
+```powershell
+.\scripts\schedule_weekly.ps1               # lunes a las 08:00
+.\scripts\schedule_weekly.ps1 -Time "07:30" # otra hora
+```
+
+- Si el PC estaba apagado a esa hora, la tarea corre apenas se encienda.
+- Cada ejecución deja un registro en `data/logs/weekly_AAAA-MM-DD.log`.
+- Si Ollama no está activo, el reporte se genera igual, solo con las reglas.
+- Para quitarla: `Unregister-ScheduledTask -TaskName "PublicBuyerRadarWeekly" -Confirm:$false`.
+
+En Linux o macOS, lo equivalente es una línea de `cron`: `0 8 * * 1 cd /ruta/public-buyer-radar && .venv/bin/python src/run_weekly.py`.
 
 ## Configuración del paso con IA
 
@@ -167,9 +188,13 @@ public-buyer-radar/
 │   ├── estimate_contracts.py  # contratos, vencimientos y señales de urgencia
 │   ├── extract_durations.py   # duración desde texto libre con IA local
 │   ├── weekly_report.py       # ranking y reporte de prospectos
-│   └── backtest.py            # mide la precisión con fechas pasadas
+│   ├── backtest.py            # mide la precisión con fechas pasadas
+│   ├── charts.py              # gráficos SVG del README, sin librerías de gráficos
+│   └── run_weekly.py          # pipeline semanal completo en un comando
+├── scripts/schedule_weekly.ps1 # programa la ejecución semanal en Windows
 ├── tests/                     # pruebas con datos falsos pequeños (sin internet ni Ollama)
 ├── docs/
+│   ├── charts/                # gráficos SVG (se adaptan a modo claro y oscuro)
 │   ├── example_report.md      # reporte real generado por el sistema
 │   └── backtest.md            # resultados del backtest
 ├── data/                      # datos y reportes (no se suben a git)
@@ -187,7 +212,7 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
-Las 38 pruebas usan tablas y archivos falsos pequeños, y simulan las respuestas de Ollama, así que no necesitan internet ni un modelo instalado. Corren automáticamente en cada cambio con GitHub Actions.
+Las 46 pruebas usan tablas y archivos falsos pequeños, y simulan las respuestas de Ollama, así que no necesitan internet ni un modelo instalado. Corren automáticamente en cada cambio con GitHub Actions.
 
 ## Decisiones de diseño
 
@@ -207,7 +232,7 @@ Las 38 pruebas usan tablas y archivos falsos pequeños, y simulan las respuestas
 ## Próximos pasos
 
 - Consultar la API de Mercado Público para leer la duración desde la ficha de la licitación.
-- Ejecución automática semanal con alerta por correo.
+- Enviar el reporte semanal por correo al terminar la ejecución.
 - Fichas de prospecto redactadas por la IA, con sugerencias de cómo acercarse.
 
 ## Fuente de datos

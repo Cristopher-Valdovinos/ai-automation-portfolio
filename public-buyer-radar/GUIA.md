@@ -32,6 +32,10 @@ Puedes ver [el reporte actualizado](docs/example_report.md), con las 25 mejores 
 4. **Prioriza.** Cada oportunidad recibe un puntaje de 0 a 100 según su tamaño, qué tan pronto vence y si hay señales de urgencia.
 5. **Descarta lo que ya se renovó.** Si el organismo ya firmó un contrato nuevo, la oportunidad se saca de la lista. Este filtro eliminó casi la mitad de los candidatos.
 
+Todo esto ocurre solo: cada lunes en la mañana, el computador descarga los datos nuevos y deja listo el reporte de la semana, sin que nadie tenga que hacer nada.
+
+![Top 10 prospectos de la semana](docs/charts/top_prospects.svg)
+
 ## ¿Funciona? Lo medimos
 
 Un caso que sale bien puede ser suerte. Por eso se hizo una prueba más exigente: se "volvió al pasado" 19 veces (el primer día de cada mes, de enero de 2025 a julio de 2026). En cada fecha se armó la lista **solo con lo que se sabía ese día**, y después se revisó qué pasó en realidad.

@@ -132,12 +132,8 @@ def to_markdown(prospects: pd.DataFrame, report_date: pd.Timestamp) -> str:
     return "\n".join(lines) + "\n"
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--date", default=str(date.today()), help="report date, YYYY-MM-DD")
-    args = parser.parse_args()
-    report_date = pd.Timestamp(args.date)
-
+def run(report_date: pd.Timestamp) -> Path:
+    """Write the CSV and Markdown report for a date; return the Markdown path."""
     prospects = find_prospects(load_contracts(), report_date)
 
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -146,6 +142,14 @@ def main() -> None:
     prospects.to_csv(csv_file, index=False, encoding="utf-8")
     md_file.write_text(to_markdown(prospects, report_date), encoding="utf-8")
     print(f"{len(prospects)} prospects -> {csv_file.name}, {md_file.name}")
+    return md_file
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--date", default=str(date.today()), help="report date, YYYY-MM-DD")
+    args = parser.parse_args()
+    run(pd.Timestamp(args.date))
 
 
 if __name__ == "__main__":
