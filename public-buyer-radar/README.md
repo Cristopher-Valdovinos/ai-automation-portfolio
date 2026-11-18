@@ -4,7 +4,7 @@ Sistema de prospección comercial B2B con datos abiertos de compras públicas de
 
 > ¿No eres del área técnica? Lee la [explicación en simple](GUIA.md): qué es, para qué sirve y cómo funciona, sin jerga.
 
-La versión 1 se enfoca en **servicios de limpieza industrial** (aseo, recolección de residuos y descontaminación): 34 meses de datos, 64.787 órdenes de compra, 1.022 organismos y 6.024 proveedores.
+La versión 1 se enfoca en **servicios de limpieza industrial** (aseo, recolección de residuos y descontaminación): 35 meses de datos (enero de 2024 a noviembre de 2026), 65.689 órdenes de compra, 1.022 organismos y 6.084 proveedores.
 
 ## Qué hace
 
@@ -15,13 +15,15 @@ La versión 1 se enfoca en **servicios de limpieza industrial** (aseo, recolecci
 
 ## Ejemplo de resultado
 
-Reporte al 17-11-2026: 90 prospectos, que suman $50.527 millones en contratos por vencer. **[Ver el reporte completo (top 25)](docs/example_report.md)**.
+Reporte al 17-11-2026: 77 prospectos, que suman $42.452 millones en contratos por vencer. **[Ver el reporte completo (top 25)](docs/example_report.md)**.
 
 | # | Puntaje | Organismo | Servicio | Proveedor actual | Monto contrato | Estado | Confianza |
 |---|---|---|---|---|---|---|---|
-| 1 | 92 | Universidad del Bío-Bío | Servicios de limpieza | colala | $1.859 M | vence en 18 días | alta |
-| 2 | 86 | I. Municipalidad de Conchalí | Servicios de limpieza | Prestación de Servicios Integrales SpA | $686 M | venció hace 10 días, sin renovación visible | media |
-| 3 | 84 | Corp. Administrativa del Poder Judicial | Servicios de limpieza | LIMCHILE S.A. | $3.981 M | vence en 44 días | alta |
+| 1 | 81 | I. Municipalidad de Linares | Eliminación y tratamiento de desechos | Dimension S.A. | $464 M | vence en 14 días | alta |
+| 2 | 81 | I. Municipalidad de San Bernardo | Servicios de limpieza | Logistic Way SpA | $441 M | vence en 10 días | alta |
+| 3 | 81 | I. Municipalidad de Talca | Eliminación y tratamiento de desechos | Servicios Integrales Tresur SpA | $1.707 M | vence en 50 días | alta |
+
+**Ejemplo de acierto:** con datos hasta octubre de 2026, el primer prospecto del reporte era la Universidad del Bío-Bío, con un contrato de aseo de $1.859 millones que vencía en 18 días. Al agregar los datos de noviembre apareció su nuevo contrato, adjudicado el 11-11-2026 por $3.684 millones a otro proveedor. El sistema sacó el prospecto de la lista porque ya fue renovado.
 
 ## Cómo se estima el vencimiento
 
@@ -29,11 +31,11 @@ Se aplica la primera regla que funcione:
 
 | Regla | Cuándo aplica | Contratos | % del monto |
 |---|---|---|---|
-| `unit_months` | El ítem se mide en meses: inicio + cantidad de meses (2 o más) | 2.629 | 26,4% |
-| `monthly_active` | Llegan órdenes todos los meses y siguen llegando | 912 | 16,5% |
-| `monthly_ended` | Llegaban órdenes mensuales y se cortaron hace más de 3 meses | 1.530 | 11,6% |
-| `ai_text` | El modelo de lenguaje encontró la duración en el texto | 319 | 8,3% |
-| `unknown` | Ninguna regla aplica | 24.140 | 37,2% |
+| `unit_months` | El ítem se mide en meses: inicio + cantidad de meses (2 o más) | 2.654 | 26,6% |
+| `monthly_active` | Llegan órdenes todos los meses y siguen llegando | 890 | 17,3% |
+| `monthly_ended` | Llegaban órdenes mensuales y se cortaron hace más de 3 meses | 1.581 | 11,9% |
+| `ai_text` | El modelo de lenguaje encontró la duración en el texto | 328 | 8,3% |
+| `unknown` | Ninguna regla aplica | 24.389 | 35,9% |
 
 La mayoría de los contratos `unknown` son compras puntuales y pequeñas: los contratos de hasta $100 millones suman solo el 6,5% del monto.
 
@@ -54,11 +56,11 @@ Para evitar respuestas inventadas:
 - Si el texto no dice la duración, debe responder `null`.
 - Las duraciones fuera de 1 a 120 meses se descartan.
 
-De los 1.233 contratos grandes sin fecha, encontró la duración en 391; 319 pasaron todos los filtros. En el resto, la orden solo dice "ORDEN DE COMPRA DESDE [código]" y el modelo respondió `null` en vez de inventar.
+De los 1.325 contratos grandes sin fecha, encontró la duración en 444; 328 pasaron todos los filtros. En el resto, la orden solo dice "ORDEN DE COMPRA DESDE [código]" y el modelo respondió `null` en vez de inventar.
 
 ## Puntaje de prospectos
 
-Entran al reporte los contratos de más de $50 millones que vencen o vencieron dentro de ±90 días y que no muestran renovación: el mismo organismo no tiene un contrato más nuevo para el mismo servicio. Este filtro descartó 72 de 162 candidatos.
+Entran al reporte los contratos de más de $50 millones que vencen o vencieron dentro de ±90 días y que no muestran renovación: el mismo organismo no tiene un contrato más nuevo para el mismo servicio. Este filtro descartó 87 de 164 candidatos.
 
 | Componente | Puntos |
 |---|---|
@@ -82,7 +84,7 @@ python -m venv .venv
 pip install -r requirements.txt
 
 # 1. Descargar y filtrar (unos 100 MB de descarga por mes)
-python src/fetch_orders.py 2024-01 2026-10
+python src/fetch_orders.py 2024-01 2026-11
 
 # 2. Estimar contratos
 python src/estimate_contracts.py
@@ -156,8 +158,8 @@ Las 26 pruebas usan tablas y archivos falsos pequeños, y simulan las respuestas
 
 ## Decisiones de diseño
 
-- **Filtrar al descargar:** cada mes pesa unos 800 MB sin comprimir; se lee por partes de 200.000 filas y solo se guarda la categoría elegida. 34 meses ocupan 13 MB en disco.
-- **Reglas primero, IA después:** las reglas cubren el 54,5% del monto sin costo. La IA se usa solo para 1.233 contratos grandes, no para 29.530.
+- **Filtrar al descargar:** cada mes pesa unos 800 MB sin comprimir; se lee por partes de 200.000 filas y solo se guarda la categoría elegida. 35 meses ocupan unos 13 MB en disco.
+- **Reglas primero, IA después:** las reglas cubren el 55,8% del monto sin costo. La IA se usa solo para 1.325 contratos grandes, no para 29.842.
 - **Evidencia obligatoria:** una respuesta del modelo sin cita verificable no se usa.
 - **Procesos que se pueden retomar:** la descarga salta los meses ya procesados y la IA guarda cada respuesta al instante.
 - **Fechas como estimación:** cada prospecto indica el método y su nivel de confianza.

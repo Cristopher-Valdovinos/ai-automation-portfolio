@@ -14,13 +14,15 @@ Una empresa que sabe con anticipación que eso va a pasar tiene ventaja: puede e
 
 ## Un ejemplo real
 
-El reporte del 17 de noviembre de 2026 dice, entre otras cosas:
+Con los datos hasta octubre de 2026, el reporte ponía en primer lugar a:
 
-> **Universidad del Bío-Bío** — contrato de aseo por $1.859 millones con el proveedor actual "colala". **Vence en 18 días.** El organismo ya hizo una compra de emergencia en los últimos meses.
+> **Universidad del Bío-Bío** — contrato de aseo por $1.859 millones. **Vence en 18 días.** El organismo ya hizo una compra de emergencia en los últimos meses.
 
-Para una empresa de aseo, esa línea dice a quién llamar, cuánto vale la oportunidad, contra quién compite y que el momento es ahora.
+Para una empresa de aseo, esa línea dice a quién llamar, cuánto vale la oportunidad y que el momento es ahora.
 
-Puedes ver [el reporte completo de ese día](docs/example_report.md), con las 25 mejores oportunidades.
+¿Qué pasó después? Al agregar los datos de noviembre apareció que la universidad adjudicó un **nuevo contrato de aseo el 11 de noviembre, por $3.684 millones, a otro proveedor**. La oportunidad era real, y quien llegó a tiempo se la llevó.
+
+Puedes ver [el reporte actualizado](docs/example_report.md), con las 25 mejores oportunidades que siguen abiertas.
 
 ## Cómo funciona
 
